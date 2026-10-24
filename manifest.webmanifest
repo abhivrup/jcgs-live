@@ -1,16 +1,25 @@
 {
- "name": "JCGS Live",
- "short_name": "JCGS Live",
- "start_url": ".",
+ "background_color": "#17181c",
+ "description": "JCGS Live \u2014 the Jain Center of Greater Sacramento YouTube channel in a classic iPod: live darshan streams and channel videos.",
  "display": "standalone",
- "background_color": "#111111",
- "theme_color": "#111111",
  "icons": [
   {
-   "src": "icon.png",
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-180.png",
    "sizes": "180x180",
    "type": "image/png",
    "purpose": "any"
   }
- ]
+ ],
+ "name": "JCGS Live",
+ "orientation": "portrait",
+ "scope": ".",
+ "short_name": "JCGS Live",
+ "start_url": ".",
+ "theme_color": "#17181c"
 }
