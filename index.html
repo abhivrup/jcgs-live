@@ -191,13 +191,13 @@
         position: absolute; pointer-events: none; user-select: none;
         font-weight: 600; letter-spacing: 0.12em; color: #5a5e64; font-size: 4.4cqw;
       }
-      .wheel .wg { position: absolute; pointer-events: none; color: #5a5e64; }
+      .wheel .wg { position: absolute; pointer-events: none; color: #5a5e64; } .cb-lbl { font-size: 3.8cqw; letter-spacing: .08em; color: #5a5e64; font-weight: 600; pointer-events: none; user-select: none; }
       .wheel button.zone {
         position: absolute; background: transparent; border: none; cursor: pointer; padding: 0;
       }
       .center-btn {
         position: absolute; width: 38%; height: 38%; left: 31%; top: 31%;
-        border-radius: 50%; cursor: pointer;
+        border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
         background: radial-gradient(circle at 50% 40%, #fafbfc 0%, #eceef1 60%, #dde0e5 100%);
         box-shadow: 0 1px 3px rgba(0,0,0,0.22), inset 0 1px 1px rgba(255,255,255,0.95), inset 0 -2px 4px rgba(0,0,0,0.07);
       }
@@ -271,7 +271,7 @@
             <button type="button" class="zone" aria-label="Previous" id="zonePrev" style="left:1%;top:31%;width:25%;height:38%"></button>
             <button type="button" class="zone" aria-label="Next" id="zoneNext" style="right:1%;top:31%;width:25%;height:38%"></button>
             <button type="button" class="zone" aria-label="Play or pause" id="zonePlay" style="bottom:1%;left:31%;width:38%;height:25%"></button>
-            <div class="center-btn" id="centerBtn" role="button" aria-label="Select" tabindex="0"></div>
+            <div class="center-btn" id="centerBtn" role="button" aria-label="Select" tabindex="0"><span class="cb-lbl">Select</span></div>
           </div>
         </div>
       </div>
