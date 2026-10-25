@@ -16,10 +16,10 @@
    "purpose": "any"
   }
  ],
- "name": "JCGS YouTube App",
+ "name": "JCGS",
  "orientation": "portrait",
  "scope": ".",
- "short_name": "JCGS YouTube App",
+ "short_name": "JCGS",
  "start_url": ".",
  "theme_color": "#17181c"
 }
