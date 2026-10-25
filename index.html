@@ -444,7 +444,7 @@
       loadIndex = startIndex || 0;
       isPlaying = true;
       progress = { t: 0, d: 0 };
-      videoTitle = m === "live" ? "Live Darshan" : (m === "streams" ? "JCGS Events" : (m === "shorts" ? "Shorts" : (m === "playlist" ? (activePlaylistTitle || "Playlist") : "JCGS Videos")));
+      videoTitle = m === "live" ? "Live Darshan" : (m === "streams" ? "JCGS Events" : (m === "shorts" ? "Reels" : (m === "playlist" ? (activePlaylistTitle || "Playlist") : "JCGS Videos")));
       mountPlayer(m);
       gotoNowPlaying();
     }
@@ -925,7 +925,7 @@
       return [
         { label: "Live Darshan / Event", chevron: true, action: function () { startLive(); } },
         { label: "Videos", chevron: true, action: function () { startMode("videos"); } },
-        { label: "Shorts", chevron: true, action: function () { startMode("shorts"); } },
+        { label: "Reels", chevron: true, action: function () { startMode("shorts"); } },
         { label: "JCGS Events", chevron: true, action: function () { openEventsList(); } },
         { label: "Playlists", chevron: true, action: function () { openPlaylistsList(); } },
         { label: "YouTube", right: "Open", action: function () { openExternal(URL_HOME); } },
