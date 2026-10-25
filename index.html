@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="JCGS YouTube App" />
+    <meta name="apple-mobile-web-app-title" content="JCGS" />
     <meta name="theme-color" content="#17181c" />
     <!-- YouTube's embedded player must identify itself via the HTTP Referer
          header; a suppressed referer makes every video fail with "Error 153:
@@ -923,7 +923,7 @@
       }
       if (screen().kind !== "menu") return null;
       return [
-        { label: "Live Darshan / Event", chevron: true, action: function () { startLive(); } },
+        { label: "Live Darshan / Live Event", chevron: true, action: function () { startLive(); } },
         { label: "JCGS Events", chevron: true, action: function () { openEventsList(); } },
         { label: "Reels", chevron: true, action: function () { startMode("shorts"); } },
         { label: "Playlists", chevron: true, action: function () { openPlaylistsList(); } },
