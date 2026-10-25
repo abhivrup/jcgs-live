@@ -924,10 +924,10 @@
       if (screen().kind !== "menu") return null;
       return [
         { label: "Live Darshan / Event", chevron: true, action: function () { startLive(); } },
-        { label: "Videos", chevron: true, action: function () { startMode("videos"); } },
-        { label: "Reels", chevron: true, action: function () { startMode("shorts"); } },
         { label: "JCGS Events", chevron: true, action: function () { openEventsList(); } },
+        { label: "Reels", chevron: true, action: function () { startMode("shorts"); } },
         { label: "Playlists", chevron: true, action: function () { openPlaylistsList(); } },
+        { label: "Videos", chevron: true, action: function () { startMode("videos"); } },
         { label: "YouTube", right: "Open", action: function () { openExternal(URL_HOME); } },
         { label: "Now Playing", chevron: true, action: function () { push({ kind: "nowPlaying" }); } }
       ];
