@@ -608,7 +608,7 @@
     function stepTrack(dir) {
       if (!player || (mode !== "videos" && mode !== "shorts" && mode !== "streams" && mode !== "playlist")) return;
       try {
-        if (dir > 0) player.nextVideo(); else player.previousVideo();
+        var pl = player.getPlaylist ? player.getPlaylist() : null, len = pl ? pl.length : 0, idx = player.getPlaylistIndex ? player.getPlaylistIndex() : -1; if (len && idx >= 0) player.playVideoAt((idx + dir + len) % len); else if (dir > 0) player.nextVideo(); else player.previousVideo();
         progress = { t: 0, d: 0 };
         isPlaying = true;
         setTimeout(refreshVideoMeta, 600);
@@ -835,7 +835,7 @@
     }
     function ensureTitlesNear(sel) {
       if (streamIds && sel + 8 >= titlesFrontier && titlesFrontier < streamIds.length) {
-        fetchTitles(titlesFrontier, 15);
+        fetchTitles(titlesFrontier, 15); if (streamIds && sel + 8 >= streamIds.length) { var wf = titlesFrontier; fetchTitles(Math.max(0, sel - 7), 15); titlesFrontier = wf; }
       }
     }
     function playStreamAt(i) {
@@ -1078,7 +1078,7 @@
 
     function moveSelection(dir) {
       if (!currentItems || !currentItems.length) return;
-      setSel(Math.min(Math.max(getSel() + dir, 0), currentItems.length - 1));
+      setSel(((getSel() + dir) % currentItems.length + currentItems.length) % currentItems.length);
       if (screen().kind === "events") ensureTitlesNear(getSel());
     }
     function onScrollStep(dir) {
