@@ -8,7 +8,8 @@ GitHub Pages build: https://abhivrup.github.io/jcgs-live/
 
 ### v1.3 — Oct 25, 2026 (current production) — tag `v1.3`, commit dc5a920
 Change set since v1.2:
-- **JCGS Events** — only events whose titles have loaded are shown: no blank rows; the list opens on the most recent events with the selection on the first event, and more rows appear as background title - **Version** — header and the app-open counter now report v1.3.
+- **JCGS Events** — only events whose titles have loaded are shown: no blank rows; the list opens on the most recent events with the selection on the first event, and more rows appear as background title loading completes.
+-  **Version** — header and the app-open counter now report v1.3.
 
 
 ### v1.2 — Oct 25, 2026 — tag `v1.2`, commit c8cd134
