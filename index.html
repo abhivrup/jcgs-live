@@ -47,7 +47,7 @@
                         counts as "test". No UI, no logging, silent on any failure.
                                  The "v" value below must match APP_VERSION (defined in the
                                           body script, shown in the header) — bump both together. */
-      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.6&t='+Date.now();}catch(e){}})();
+      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.7&t='+Date.now();}catch(e){}})();
     </script>
     <title>JCGS YouTube App</title>
     <style>
@@ -265,7 +265,7 @@
     <script>
     "use strict";
     /* ============================ channel ============================ */
-    var APP_VERSION = "v1.6";
+    var APP_VERSION = "v1.7";
       var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
     var UPLOADS_PLAYLIST = "UU1C7YIULB-Rj-9A1l62ajrA"; /* channel uploads = UU + channel id minus UC */
     var STREAMS_PLAYLIST = "UULV1C7YIULB-Rj-9A1l62ajrA"; /* "Live streams" — the channel's stream recordings */
@@ -282,7 +282,18 @@
       var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
       return m + ":" + (s < 10 ? "0" : "") + s;
     }
-    function openExternal(url) { window.open(url, "_blank"); }
+    /* External links: from the Home Screen app (standalone), window.open
+       spawns an in-app browser sheet — and when the link hands off to the
+       YouTube app, that sheet is left behind blank, to be dismissed by
+       hand on return. A plain navigation is handed to the system instead
+       and leaves no sheet behind; the app stays on its own screen. In a
+       normal browser tab, keep the new-tab behavior. */
+    function openExternal(url) {
+      var standalone = (window.navigator && window.navigator.standalone) ||
+        (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+      if (standalone) { window.location.href = url; return; }
+      window.open(url, "_blank");
+    }
 
     /* ============================ click sound ============================ */
     var audioCtx = null;
