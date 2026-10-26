@@ -376,17 +376,24 @@
     })();
 
     /* ==================== Live Darshan (embedded) ====================
-       The "Live Darshan / Event" item plays the channel's live stream
-       embedded in Now Playing. Its source is the channel's /live page
-       — https://m.youtube.com/@JCGSLive/live/ (trailing slash
-       included, exactly as the user specified) — in embed form: the
-       live_stream embed for the channel (see makeYtIframe), which
-       YouTube resolves to whatever is currently live on the channel
-       at load time. The player is built directly on that source;
-       there is no runtime video-ID lookup, so a past recording can
-       never be presented as the live darshan. Entering Live always
-       rebuilds the player (see sourceKey), so a stale source can
-       never keep playing in its place.
+       The "Live Darshan / Live Event" item plays the channel's live stream
+       embedded in Now Playing. Entering Live first asks the channel
+       owner's resolver endpoint (LIVE_RESOLVER_URL, an Apps Script
+       web app) for the channel's current live video ID — resolved
+       fresh on every entry, never cached in the app — and plays
+       that ID through the standard video embed (see makeYtIframe),
+       with the same player setup as every other source. The ID is
+       what the channel's /live page
+       (https://m.youtube.com/@JCGSLive/live/, trailing slash
+       included, exactly as the user specified) currently points at,
+       so a past recording is never presented as the live darshan.
+       If the resolver answers null, fails to load, or does not
+       answer within ~8 seconds, Live falls back to its previous
+       source unchanged: the live_stream embed for the channel,
+       which YouTube resolves to whatever is currently live on the
+       channel at load time. Entering Live always rebuilds the
+       player (see sourceKey), so a stale source can never keep
+       playing in its place.
        If the embed reports a player error (e.g. nothing is live, or
        the stream refuses embedding), the item falls back to opening
        the /live page on YouTube — URL_LIVE, trailing slash included
@@ -400,19 +407,61 @@
        Next/Previous are no-ops for Live (see stepTrack). */
     /* Bumped on every live entry and folded into live mode's source
        key (see sourceKey), so entering Live Darshan always rebuilds
-       the player on the live_stream embed and no previously loaded
+       the player on the live embed and no previously loaded
        source can continue in its place — not even when re-entering
        Live. */
     var liveSeq = 0;
+    /* The channel owner's live resolver (Apps Script web app): given
+       the JSONP callback name __jcgsLiveResolve, it answers with the
+       channel's current live video ID, e.g. {"live":"A4SqCamMaF4"},
+       or {"live":null} when nothing is live. Distinct from the
+       app-open counter endpoint in the page head — do not merge. */
+    var LIVE_RESOLVER_URL = "https://script.google.com/macros/s/AKfycbyMEejxokxsxorDwLw9tYYrgZSQKXazcK43D2Tw_VpnE9zU6c8VnngUiG0rqFeATYDG/exec";
+    /* Video ID resolved for the current live entry, or null when the
+       resolver gave no ID (live mode then uses the live_stream embed,
+       exactly as before). Set fresh by resolveLiveId on every entry;
+       never carried across entries. */
+    var liveResolvedId = null;
     function startLive() {
-      /* The live_stream embed resolves at load time, so there is
-         nothing to look up: just enter live mode. mountPlayer queues
-         the entry if the IFrame API is not ready yet. Any stray
-         offscreen harvest player is cleared first. */
+      /* Resolve the current live ID fresh, then enter live mode.
+         mountPlayer queues the entry if the IFrame API is not ready
+         yet. Any stray offscreen harvest player is cleared first. */
       cancelLiveWork();
       liveSeq++;
       liveFallbackDone = false;
-      startMode("live");
+      liveResolvedId = null;
+      resolveLiveId(liveSeq);
+    }
+    /* Ask the resolver for the channel's current live video ID via a
+       JSONP-style script tag (Apps Script answers a page this way).
+       Whichever way the lookup ends — an ID, null, a failed load, or
+       no answer within ~8 seconds — live mode is entered exactly
+       once: with the resolved ID when there is one, otherwise with
+       the previous live_stream behavior, unchanged. A late answer
+       for an entry the user has already superseded or navigated
+       away from is ignored. */
+    function resolveLiveId(seq) {
+      var done = false;
+      var timer = null;
+      var tag = null;
+      function finish(id) {
+        if (done) return;
+        done = true;
+        if (timer) { clearTimeout(timer); timer = null; }
+        if (tag && tag.parentNode) tag.parentNode.removeChild(tag);
+        if (seq !== liveSeq) return;         /* entry superseded */
+        if (screen().kind !== "menu") return; /* user navigated away */
+        liveResolvedId = id || null;
+        startMode("live");
+      }
+      window.__jcgsLiveResolve = function (data) {
+        finish(data && data.live ? String(data.live) : null);
+      };
+      tag = document.createElement("script");
+      tag.src = LIVE_RESOLVER_URL + "?cb=__jcgsLiveResolve&t=" + Date.now();
+      tag.onerror = function () { finish(null); };
+      document.head.appendChild(tag);
+      timer = setTimeout(function () { finish(null); }, 8000);
     }
     /* The embedded live player refused the stream (e.g. embedding
        disabled for it): leave Now Playing and open the live page on
@@ -427,7 +476,7 @@
     /* Clear any offscreen harvest player left over from an earlier
        flow, so nothing offscreen lingers when sections change.
        (Live Darshan itself no longer uses the harvest machinery —
-       it loads the live_stream embed directly; the harvest player
+       it loads its live embed directly; the harvest player
        now serves only the JCGS Events list below.) Called whenever
        the user moves on — picking a section (see startMode),
        opening a browse list, entering Live, or backing out of the
@@ -453,9 +502,10 @@
     }
     function loadSource(target, m) {
       if (m === "live") {
-        /* Nothing to load: the live player's iframe src IS the
-           live_stream embed (see makeYtIframe), which resolves to
-           whatever is live on the channel at load time. */
+        /* Nothing to load: the live player's iframe src IS the live
+           embed (see makeYtIframe) — the resolved current live
+           video's standard embed, or the live_stream embed when
+           the resolver gave no ID. */
       }
       else {
         if (m === "streams") target.loadPlaylist({ listType: "playlist", list: STREAMS_PLAYLIST, index: loadIndex });
@@ -494,12 +544,18 @@
         }
       } catch (e) { /* origin is optional identity garnish */ }
       if (m === "live") {
-        /* Live Darshan's source: the channel's /live page
-           (https://m.youtube.com/@JCGSLive/live/) in embed form —
-           the live_stream embed resolves to whatever is currently
-           live on the channel at load time. Same self-built iframe
-           discipline as every other player: referrerpolicy + origin. */
-        f.src = "https://www.youtube.com/embed/live_stream?channel=" + CHANNEL_ID + "&autoplay=1&" + q;
+        /* Live Darshan's source: the channel's current live video.
+           When the resolver supplied its ID (see resolveLiveId),
+           use the standard video embed of that ID; otherwise fall
+           back to the live_stream embed, which resolves to whatever
+           is currently live on the channel at load time. Same
+           self-built iframe discipline as every other player:
+           referrerpolicy + origin, same parameters either way. */
+        if (liveResolvedId) {
+          f.src = "https://www.youtube.com/embed/" + liveResolvedId + "?autoplay=1&" + q;
+        } else {
+          f.src = "https://www.youtube.com/embed/live_stream?channel=" + CHANNEL_ID + "&autoplay=1&" + q;
+        }
       } else {
         f.src = "https://www.youtube.com/embed?" + q;
       }
@@ -518,7 +574,8 @@
          never equal the key of the player instance already on screen.
          Entering Live therefore always takes the teardown-and-rebuild
          path in mountPlayer below, and the fresh player's first and
-         only source is the live_stream embed — a previous playlist
+         only source is the live embed (the resolved live video, or
+         the live_stream fallback) — a previous playlist
          queue sharing the old player can't leak through. */
       if (m === "live") return "live#" + liveSeq;
       if (m === "streams") return "streams:" + loadIndex;
