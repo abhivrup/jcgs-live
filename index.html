@@ -47,7 +47,7 @@
                         counts as "test". No UI, no logging, silent on any failure.
                                  The "v" value below must match APP_VERSION (defined in the
                                           body script, shown in the header) — bump both together. */
-      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.2&t='+Date.now();}catch(e){}})();
+      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.3&t='+Date.now();}catch(e){}})();
     </script>
     <title>JCGS YouTube App</title>
     <style>
@@ -309,7 +309,7 @@
     <script>
     "use strict";
     /* ============================ channel ============================ */
-    var APP_VERSION = "v1.2";
+    var APP_VERSION = "v1.3";
       var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
     var UPLOADS_PLAYLIST = "UU1C7YIULB-Rj-9A1l62ajrA"; /* channel uploads = UU + channel id minus UC */
     var STREAMS_PLAYLIST = "UULV1C7YIULB-Rj-9A1l62ajrA"; /* "Live streams" — the channel's stream recordings */
@@ -980,15 +980,22 @@
       }
       if (screen().kind === "events") {
         if (!streamIds) return [{ label: "Loading events…", action: function () {} }];
-        return streamIds.map(function (id, i) {
-          return {
-            /* Events whose titles are still loading in the background
-                           render blank — no "Loading" label — and their titles
-                                          fill in silently as they arrive (see fetchTitles). */
-            label: streamTitles[id] || "",
+var items = [];
+        streamIds.forEach(function (id, i) {
+          /* Only events whose titles have already loaded get a row.
+             Events still loading in the background are not rendered
+             at all — no blank or placeholder rows — and appear in
+             the list, in the same newest-first order, as their
+             titles arrive (see fetchTitles). The action keeps the
+             event's own index in the full streamIds list, so every
+             visible row still plays its own event. */
+    if (!streamTitles[id]) return;
+          items.push({
+            label: streamTitles[id],
             action: function () { playStreamAt(i); }
-          };
+          });
         });
+        return items;
       }
       if (screen().kind !== "menu") return null;
       return [
