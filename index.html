@@ -47,7 +47,7 @@
                         counts as "test". No UI, no logging, silent on any failure.
                                  The "v" value below must match APP_VERSION (defined in the
                                           body script, shown in the header) — bump both together. */
-      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.4&t='+Date.now();}catch(e){}})();
+      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.5&t='+Date.now();}catch(e){}})();
     </script>
     <title>JCGS YouTube App</title>
     <style>
@@ -171,25 +171,6 @@
       .np-progress { display: flex; align-items: center; gap: 2.3cqw; margin-top: 1.9cqw; font-size: 3.5cqw; }
       .np-bar { flex: 1; height: 1.7cqw; border-radius: 999px; background: rgba(255,255,255,0.3); overflow: hidden; }
       .np-bar > div { height: 100%; border-radius: 999px; background: #fff; width: 0%; }
-      .np-yt {
-        pointer-events: auto;
-        display: inline-flex; align-items: center; gap: 1.8cqw;
-        margin-top: 2.3cqw;
-        font: inherit; font-size: 3.8cqw; font-weight: 700; letter-spacing: 0.02em;
-        color: #fff; background: #c62f24; border: none; border-radius: 1.6cqw;
-        padding: 1.5cqw 2.8cqw; cursor: pointer;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.45);
-      }
-      .np-yt:active { background: #a8261d; }
-      /* Pseudo-fullscreen fallback for browsers with no element Fullscreen
-         API (iPhone Safari / Home Screen web apps) or hosts that deny it:
-         the screen bezel takes over the whole viewport so the video still
-         fills the display and the overlay controls stay reachable. */
-      body.pseudo-fs .bezel {
-        position: fixed; inset: 0; z-index: 80;
-        border-radius: 0; padding: 0; background: #000;
-      }
-      body.pseudo-fs .lcd { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
       /* ------------------------------ click wheel ------------------------------ */
       .wheel-wrap { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
       .wheel {
@@ -254,12 +235,6 @@
                 <span id="npRem">-0:00</span>
                 <span id="npState" style="font-size:3.4cqw">▶</span>
               </div>
-              <div>
-                <button type="button" class="np-yt" id="npFsBtn" style="background:rgba(20,22,18,0.85)">
-                  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style="width:4.4cqw;height:4.4cqw"><path d="M2 2h6v2.5H4.5V8H2zM12 2h6v6h-2.5V4.5H12zM18 12v6h-6v-2.5h3.5V12zM2 12h2.5v3.5H8V18H2z"/></svg>
-                  Full Screen
-                </button>
-              </div>
             </div>
 
           </div>
@@ -290,7 +265,7 @@
     <script>
     "use strict";
     /* ============================ channel ============================ */
-    var APP_VERSION = "v1.4";
+    var APP_VERSION = "v1.5";
       var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
     var UPLOADS_PLAYLIST = "UU1C7YIULB-Rj-9A1l62ajrA"; /* channel uploads = UU + channel id minus UC */
     var STREAMS_PLAYLIST = "UULV1C7YIULB-Rj-9A1l62ajrA"; /* "Live streams" — the channel's stream recordings */
@@ -501,7 +476,7 @@
       }
     }
     /* Make sure the embed iframe itself permits fullscreen, so the YouTube
-       player's own fullscreen button works too — on iOS the video goes
+       player's own fullscreen button works — on iOS the video goes
        fullscreen natively from inside the iframe, which needs this. */
     function prepPlayerIframe() {
       try {
@@ -661,51 +636,6 @@
         renderNowPlaying(); syncPlayingUi();
       } catch (e) { /* transient */ }
     }
-    /* Full-screen the LCD (video + overlays together). iPhone Safari has
-       no element Fullscreen API at all, and a host page can deny fullscreen
-       to a framed app — so when the real API is missing or refuses, fall
-       back to a pseudo-fullscreen mode that stretches the screen bezel
-       across the whole viewport. The button therefore always does
-       something visible, and tapping it again exits whichever mode is on. */
-    function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
-    function tryRequestFs(el) {
-      if (!el) return Promise.reject(new Error("no fullscreen target"));
-      var req = el.requestFullscreen || el.webkitRequestFullscreen;
-      if (!req) return Promise.reject(new Error("no fullscreen api"));
-      try {
-        var r = req.call(el);
-        return (r && typeof r.then === "function") ? r : Promise.resolve();
-      } catch (e) { return Promise.reject(e); }
-    }
-    function enterPseudoFs() { document.body.classList.add("pseudo-fs"); }
-    function exitPseudoFs() { document.body.classList.remove("pseudo-fs"); }
-    $("npFsBtn").addEventListener("click", function () {
-      click();
-      if (document.body.classList.contains("pseudo-fs")) { exitPseudoFs(); return; }
-      if (fsElement()) {
-        try {
-          if (document.exitFullscreen) document.exitFullscreen();
-          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        } catch (e) { /* ignore — already out */ }
-        return;
-      }
-      var iframe = null;
-      try { iframe = player && player.getIframe ? player.getIframe() : null; } catch (e) {}
-      tryRequestFs($("lcd"))
-        .catch(function () { return tryRequestFs(iframe); })
-        .catch(function () { enterPseudoFs(); })
-        .then(function () {
-          /* Once real fullscreen engages on a phone, tip the video into
-             landscape (Android Chrome); rejected elsewhere — harmless. */
-          try {
-            if (fsElement() && window.screen && screen.orientation && screen.orientation.lock) {
-              var lp = screen.orientation.lock("landscape");
-              if (lp && lp.catch) lp.catch(function () {});
-            }
-          } catch (e) { /* optional garnish */ }
-        });
-    });
-
     function togglePlay() {
       if (!player || !mode) return;
       try {
@@ -1131,8 +1061,6 @@ var items = [];
     }
     function onMenuBtn() {
       click();
-      /* MENU is also the way out of the pseudo-fullscreen fallback. */
-      if (document.body.classList.contains("pseudo-fs")) { exitPseudoFs(); return; }
       /* Backing out of Live Darshan tears all live playback down
          (see teardownLivePlayback) instead of leaving the live
          player, its probe/harvest machinery, and its timers running
