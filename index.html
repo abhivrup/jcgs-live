@@ -42,7 +42,12 @@
       })();
     </script>
     <script>
-      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&t='+Date.now();}catch(e){}})();
+      /* Invisible app-open counter: one fire-and-forget ping per load.
+               Production opens (github.io) count as "app"; anything else
+                        counts as "test". No UI, no logging, silent on any failure.
+                                 The "v" value below must match APP_VERSION (defined in the
+                                          body script, shown in the header) — bump both together. */
+      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.2&t='+Date.now();}catch(e){}})();
     </script>
     <title>JCGS YouTube App</title>
     <style>
@@ -124,6 +129,10 @@
       .lcd-header .icons { display: flex; align-items: center; gap: 2cqw; flex: none; }
       .lcd-header .icons svg { width: 7.4cqw !important; height: 3.3cqw !important; }
       #playingIcon { font-size: 3.9cqw !important; }
+      .app-version {
+                font-size: 4cqw; font-weight: 700; letter-spacing: 0.02em;
+                color: #3c4636; line-height: 1; white-space: nowrap;
+      }
       .live-dot {
         display: inline-block; width: 2.2cqw; height: 2.2cqw; border-radius: 50%;
         background: #c62f24; box-shadow: 0 0 0 0.5cqw rgba(198,47,36,0.25);
@@ -240,11 +249,7 @@
                 <span class="ttl" id="lcdTitle">JCGS YouTube App</span>
                 <span class="icons">
                   <span id="playingIcon" class="hidden" style="font-size:3.4cqw" aria-label="Playing">▶</span>
-                  <svg viewBox="0 0 27 12" aria-hidden="true" style="width:6.4cqw;height:2.9cqw">
-                    <rect x="0.7" y="0.7" width="22" height="10.6" rx="2" fill="none" stroke="#3c4636" stroke-width="1.2"/>
-                    <rect x="2.4" y="2.4" width="15" height="7.2" fill="#5d7050"/>
-                    <path d="M24.4 4v4a2.2 2.2 0 0 0 0-4z" fill="#3c4636"/>
-                  </svg>
+                  <span id="appVersion" class="app-version" aria-label="App version"></span>
                 </span>
               </div>
               <div class="rows" id="rows"></div>
@@ -304,7 +309,8 @@
     <script>
     "use strict";
     /* ============================ channel ============================ */
-    var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
+    var APP_VERSION = "v1.2";
+      var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
     var UPLOADS_PLAYLIST = "UU1C7YIULB-Rj-9A1l62ajrA"; /* channel uploads = UU + channel id minus UC */
     var STREAMS_PLAYLIST = "UULV1C7YIULB-Rj-9A1l62ajrA"; /* "Live streams" — the channel's stream recordings */
     var SHORTS_PLAYLIST = "UUSH1C7YIULB-Rj-9A1l62ajrA"; /* "Short videos" — the channel's shorts */
@@ -976,7 +982,10 @@
         if (!streamIds) return [{ label: "Loading events…", action: function () {} }];
         return streamIds.map(function (id, i) {
           return {
-            label: streamTitles[id] || "Loading…",
+            /* Events whose titles are still loading in the background
+                           render blank — no "Loading" label — and their titles
+                                          fill in silently as they arrive (see fetchTitles). */
+            label: streamTitles[id] || "",
             action: function () { playStreamAt(i); }
           };
         });
@@ -1193,7 +1202,8 @@
       else if (e.key === "Escape" || e.key === "Backspace") { onMenuBtn(); e.preventDefault(); }
     });
 
-    render();
+    $("appVersion").textContent = APP_VERSION;
+      render();
     </script>
   </body>
 </html>
