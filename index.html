@@ -47,7 +47,7 @@
                         counts as "test". No UI, no logging, silent on any failure.
                                  The "v" value below must match APP_VERSION (defined in the
                                           body script, shown in the header) — bump both together. */
-      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.5&t='+Date.now();}catch(e){}})();
+      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.6&t='+Date.now();}catch(e){}})();
     </script>
     <title>JCGS YouTube App</title>
     <style>
@@ -265,7 +265,7 @@
     <script>
     "use strict";
     /* ============================ channel ============================ */
-    var APP_VERSION = "v1.5";
+    var APP_VERSION = "v1.6";
       var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
     var UPLOADS_PLAYLIST = "UU1C7YIULB-Rj-9A1l62ajrA"; /* channel uploads = UU + channel id minus UC */
     var STREAMS_PLAYLIST = "UULV1C7YIULB-Rj-9A1l62ajrA"; /* "Live streams" — the channel's stream recordings */
@@ -328,6 +328,7 @@
       apiReady = true;
       if (pendingMode) { var m = pendingMode; pendingMode = null; startMode(m); }
       if (eventsLoadPending) { eventsLoadPending = false; startHarvest(); }
+      if (videosLoadPending) { videosLoadPending = false; startVideoHarvest(); }
     };
     (function loadApi() {
       if (window.YT && window.YT.Player) { apiReady = true; return; }
@@ -444,6 +445,7 @@
        live Now Playing screen (see teardownLivePlayback). */
     function cancelLiveWork() {
       destroyHarvest();
+      destroyVideoHarvest();
     }
 
     var loadIndex = 0; /* playlist start index for the next loadSource (picked stream) */
@@ -472,7 +474,7 @@
         if (m === "streams") target.loadPlaylist({ listType: "playlist", list: STREAMS_PLAYLIST, index: loadIndex });
         else if (m === "shorts") target.loadPlaylist({ listType: "playlist", list: SHORTS_PLAYLIST, index: 0 });
         else if (m === "playlist") target.loadPlaylist({ listType: "playlist", list: activePlaylistId, index: 0 });
-        else target.loadPlaylist({ listType: "playlist", list: UPLOADS_PLAYLIST, index: 0 });
+        else target.loadPlaylist({ listType: "playlist", list: UPLOADS_PLAYLIST, index: loadIndex });
       }
     }
     /* Make sure the embed iframe itself permits fullscreen, so the YouTube
@@ -664,6 +666,13 @@
     var eventsLoadPending = false;
     var bgTitlesStarted = false;
     var harvestPlayer = null, harvestTimer = null, harvestTries = 0, harvestHost = null;
+    var videoIds = null;         /* null until harvested */
+    var videoTitles = {};        /* video id -> title */
+    var videoTitleRequested = {}; /* video id -> fetch started */
+    var videoTitlesFrontier = 0; /* first index whose title is unrequested */
+    var videosLoadPending = false;
+    var videoBgTitlesStarted = false;
+    var videoHarvestPlayer = null, videoHarvestTimer = null, videoHarvestTries = 0, videoHarvestHost = null;
 
     function openEventsList() {
       /* Clear any stray offscreen harvest player before starting
@@ -795,6 +804,138 @@
       if (t) { videoTitle = t; renderNowPlaying(); }
     }
 
+    /* ==================== Videos browse list ====================
+       The Videos menu item opens this list, mirroring JCGS Events:
+       the channel's uploads are harvested offscreen, titles load in
+       the background, and only titled videos get a row. Picking a
+       row loads the uploads playlist at that video's index, so the
+       wheel still steps through the uploads in order. If the
+       harvest or the title chain fails, the list gives up and falls
+       back to autoplay the uploads playlist from the start. */
+    function openVideosList() {
+      /* Clear any stray offscreen harvest players before starting
+         a fresh Videos harvest. */
+      cancelLiveWork();
+      push({ kind: "videosList" });
+      if (videoIds) { kickVideoTitleLoads(); return; }
+      /* Shortcut: the uploads playlist is already loaded in the player. */
+      if (player && mode === "videos") {
+        try {
+          var ids = player.getPlaylist ? player.getPlaylist() : null;
+          if (ids && ids.length) { finishVideoIds(ids); return; }
+        } catch (e) { /* fall through to the harvest player */ }
+      }
+      if (!apiReady || !window.YT || !window.YT.Player) { videosLoadPending = true; return; }
+      startVideoHarvest();
+    }
+    function startVideoHarvest() {
+      if (videoHarvestPlayer) return;
+      var div = document.createElement("div");
+      div.style.cssText = "position:absolute;left:-9999px;top:0;width:8px;height:8px;overflow:hidden";
+      document.body.appendChild(div);
+      videoHarvestHost = div;
+      var hFrame = makeYtIframe();
+      div.appendChild(hFrame);
+      try {
+        videoHarvestPlayer = new window.YT.Player(hFrame, {
+          events: {
+            onReady: function (e) {
+              try { e.target.cuePlaylist({ listType: "playlist", list: UPLOADS_PLAYLIST }); } catch (err) {}
+            }
+          }
+        });
+      } catch (e) { failVideoHarvest(); return; }
+      videoHarvestTries = 0;
+      videoHarvestTimer = setInterval(pollVideoHarvest, 300);
+    }
+    function pollVideoHarvest() {
+      videoHarvestTries++;
+      var ids = null;
+      try { ids = videoHarvestPlayer && videoHarvestPlayer.getPlaylist ? videoHarvestPlayer.getPlaylist() : null; } catch (e) {}
+      if (ids && ids.length) { finishVideoIds(ids); return; }
+      if (videoHarvestTries > 30) failVideoHarvest(); /* ~9s with no list — give up */
+    }
+    function destroyVideoHarvest() {
+      if (videoHarvestTimer) { clearInterval(videoHarvestTimer); videoHarvestTimer = null; }
+      if (videoHarvestPlayer) {
+        try { videoHarvestPlayer.destroy(); } catch (e) {}
+        try { var f = videoHarvestPlayer.getIframe(); if (f && f.parentNode) f.parentNode.removeChild(f); } catch (e) {}
+        videoHarvestPlayer = null;
+      }
+      if (videoHarvestHost) {
+        if (videoHarvestHost.parentNode) videoHarvestHost.parentNode.removeChild(videoHarvestHost);
+        videoHarvestHost = null;
+      }
+    }
+    function finishVideoIds(ids) {
+      videoIds = ids.slice();
+      if (screen().kind === "videosList") render();
+      kickVideoTitleLoads();
+      destroyVideoHarvest();
+    }
+    function failVideoHarvest() {
+      cancelLiveWork();
+      if (screen().kind === "videosList") { pop(); startMode("videos"); }
+    }
+    function fetchVideoTitles(from, count) {
+      if (!videoIds || typeof fetch !== "function") return [];
+      var jobs = [];
+      var end = Math.min(videoIds.length, from + count);
+      videoTitlesFrontier = Math.max(videoTitlesFrontier, end);
+      for (var i = from; i < end; i++) {
+        (function (id) {
+          if (videoTitleRequested[id]) return;
+          videoTitleRequested[id] = true;
+          var job = fetch("https://www.youtube.com/oembed?url=" + encodeURIComponent("https://www.youtube.com/watch?v=" + id) + "&format=json")
+            .then(function (r) { if (!r.ok) throw new Error("oembed " + r.status); return r.json(); })
+            .then(function (j) {
+              if (j && j.title) videoTitles[id] = j.title;
+              if (screen().kind === "videosList") render();
+              return !!videoTitles[id];
+            })
+            .catch(function () { return false; });
+          jobs.push(job);
+        })(videoIds[i]);
+      }
+      return jobs;
+    }
+    function kickVideoTitleLoads() {
+      /* Newest 5 first — the list opens fast with real titles. If none of
+         them resolve, title lookup is broken: fall back to autoplay. */
+      var first = fetchVideoTitles(0, 5);
+      if (first.length) {
+        Promise.all(first).then(function (results) {
+          var ok = results.some(function (r) { return r; });
+          if (!ok && screen().kind === "videosList") { pop(); startMode("videos"); }
+        });
+      } else if (videoIds && !videoIds.slice(0, 5).some(function (id) { return videoTitles[id]; })) {
+        /* Nothing in flight and nothing loaded at the top of the list —
+           title lookup is unavailable; fall back to autoplay. */
+        if (screen().kind === "videosList") { pop(); startMode("videos"); }
+      }
+      if (!videoBgTitlesStarted) {
+        videoBgTitlesStarted = true;
+        var next = 5;
+        (function bgStep() {
+          if (!videoIds || next >= videoIds.length) return;
+          fetchVideoTitles(next, 15);
+          next += 15;
+          setTimeout(bgStep, 900);
+        })();
+      }
+    }
+    function ensureVideoTitlesNear(sel) {
+      if (videoIds && sel + 8 >= videoTitlesFrontier && videoTitlesFrontier < videoIds.length) {
+        fetchVideoTitles(videoTitlesFrontier, 15); if (videoIds && sel + 8 >= videoIds.length) { var wf = videoTitlesFrontier; fetchVideoTitles(Math.max(0, sel - 7), 15); videoTitlesFrontier = wf; }
+      }
+    }
+    function playVideoAt(i) {
+      if (!videoIds || !videoIds[i]) { startMode("videos"); return; }
+      startMode("videos", i);
+      var t = videoTitles[videoIds[i]];
+      if (t) { videoTitle = t; renderNowPlaying(); }
+    }
+
     /* ==================== Playlists browse list ====================
        Same experience as JCGS Events, one level up: a scrollable in-app
        list of the channel's playlists (titles, in Playlists-tab order)
@@ -862,6 +1003,22 @@
           };
         });
       }
+      if (screen().kind === "videosList") {
+        if (!videoIds) return [{ label: "Loading videos…", action: function () {} }];
+        var vItems = [];
+        videoIds.forEach(function (id, i) {
+          /* Only videos whose titles have already loaded get a row —
+             same rule as JCGS Events: no blank or placeholder rows,
+             and every row keeps its own index in the full uploads
+             list, so it always plays its own video. */
+          if (!videoTitles[id]) return;
+          vItems.push({
+            label: videoTitles[id],
+            action: function () { playVideoAt(i); }
+          });
+        });
+        return vItems;
+      }
       if (screen().kind === "events") {
         if (!streamIds) return [{ label: "Loading events…", action: function () {} }];
 var items = [];
@@ -887,7 +1044,7 @@ var items = [];
         { label: "JCGS Events", chevron: true, action: function () { openEventsList(); } },
         { label: "Reels", chevron: true, action: function () { startMode("shorts"); } },
         { label: "Playlists", chevron: true, action: function () { openPlaylistsList(); } },
-        { label: "Videos", chevron: true, action: function () { startMode("videos"); } },
+        { label: "Videos", chevron: true, action: function () { openVideosList(); } },
         { label: "YouTube", right: "Open", action: function () { openExternal(URL_HOME); } },
         { label: "Now Playing", chevron: true, action: function () { push({ kind: "nowPlaying" }); } }
       ];
@@ -905,7 +1062,7 @@ var items = [];
       $("npOverlay").classList.toggle("hidden", !isNP);
       syncPlayingUi();
       if (isNP) { renderNowPlaying(); return; }
-      $("lcdTitle").textContent = s.kind === "events" ? "JCGS Events" : (s.kind === "playlists" ? "Playlists" : "JCGS YouTube App");
+      $("lcdTitle").textContent = s.kind === "events" ? "JCGS Events" : (s.kind === "videosList" ? "Videos" : (s.kind === "playlists" ? "Playlists" : "JCGS YouTube App"));
       $("menuNote").classList.toggle("hidden", s.kind !== "menu");
       currentItems = buildItems();
       var rowsEl = $("rows");
@@ -1040,6 +1197,7 @@ var items = [];
       if (!currentItems || !currentItems.length) return;
       setSel(((getSel() + dir) % currentItems.length + currentItems.length) % currentItems.length);
       if (screen().kind === "events") ensureTitlesNear(getSel());
+      if (screen().kind === "videosList") ensureVideoTitlesNear(getSel());
     }
     function onScrollStep(dir) {
       if (screen().kind === "nowPlaying") {
