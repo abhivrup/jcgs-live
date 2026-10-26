@@ -6,7 +6,13 @@ GitHub Pages build: https://abhivrup.github.io/jcgs-live/
 
 ## Releases
 
-### v1.7 — Oct 25, 2026 (current production) — tag `v1.7`, commit a84ec06
+### v1.8 — Oct 25, 2026 (current production) — tag `v1.8`, commit 9e9cd4d
+
+**Change set since v1.7:**
+- Menu: renamed the "YouTube" menu item to "YouTube Channel" (label only — same position, same action, still opens the channel home page externally).
+- Version: header and the app-open counter now report v1.8.
+
+### v1.7 — Oct 25, 2026 — tag `v1.7`, commit a84ec06
 
 **Change set since v1.6:**
 - External links: fixed the blank in-app browser sheet left behind when returning from an external link in the Home Screen app. External opens (YouTube menu item, Live error fallback, Playlists web fallback) now navigate directly when the app runs standalone, so iOS hands the link to the system and no blank sheet remains; in a normal browser tab they still open in a new tab.
