@@ -6,6 +6,8 @@ GitHub Pages build: https://abhivrup.github.io/jcgs-live/
 
 ## Releases
 
+### v1.10 — Oct 27, 2026: Favorites playback now loops continuously (when the last favorite ends, it starts again from the first). Favorites only; other sections unchanged.
+
 ### v1.9 — Oct 26, 2026 — tag `v1.9`, commit f4a9e58
 
 **Change set since v1.8:**
