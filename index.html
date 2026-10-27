@@ -47,7 +47,7 @@
                         counts as "test". No UI, no logging, silent on any failure.
                                  The "v" value below must match APP_VERSION (defined in the
                                           body script, shown in the header) — bump both together. */
-      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.10&t='+Date.now();}catch(e){}})();
+      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.11&t='+Date.now();}catch(e){}})();
     </script>
     <title>JCGS YouTube App</title>
     <style>
@@ -204,26 +204,18 @@
         pointer-events: none; user-select: none;
         font-weight: 600; letter-spacing: 0.06em; color: #5a5e64; font-size: 3.3cqw;
       }
-      /* ------------------------------ name edit (v1.9) ------------------------------ */
-      .name-edit {
-        position: absolute; inset: 0; z-index: 5;
-        display: flex; flex-direction: column; padding: 6cqw 4.5cqw;
-        background: linear-gradient(180deg, #eef2e6 0%, #e3ead9 55%, #d9e2cd 100%);
-      }
-      .name-edit h2 { margin: 0 0 2cqw; font-size: 5.2cqw; }
-      .name-edit p { margin: 0 0 4cqw; font-size: 3.9cqw; line-height: 1.4; color: #4c5546; }
-      .name-edit input {
-        font: inherit; font-size: 5cqw; font-weight: 600; width: 100%;
-        padding: 2.6cqw 3cqw; border-radius: 1.6cqw; color: #191d17; background: #fff;
-        border: 1px solid rgba(70,90,55,0.45);
-      }
-      .name-edit .ne-btns { display: flex; gap: 2.5cqw; margin-top: 4.5cqw; }
-      .name-edit button {
-        flex: 1; font: inherit; font-size: 4.6cqw; font-weight: 700; cursor: pointer;
-        padding: 2.8cqw 0; border-radius: 999px; color: #191d17; background: #fff;
-        border: 1px solid rgba(70,90,55,0.4);
-      }
-      .name-edit button.primary { background: linear-gradient(180deg, #4b93e6 0%, #1d5cb8 100%); color: #fff; border-color: transparent; }
+      /* ------------------------------ Diwali theme (v1.11) ------------------------------ */
+      body.diwali { background: radial-gradient(120% 90% at 50% 0%, #57101f 0%, #420a17 55%, #2a060f 100%); }
+      body.diwali .ipod { background: linear-gradient(160deg, #7a1f33 0%, #5e1020 48%, #420a17 100%); }
+      body.diwali .bezel { background: #2a060f; }
+      body.diwali .lcd { background: linear-gradient(180deg, #fdf6e3 0%, #f7ead0 55%, #efdcae 100%); color: #420a17; }
+      body.diwali .lcd-header { background: linear-gradient(180deg, rgba(233,199,102,0.65), rgba(233,199,102,0.10)); }
+      body.diwali .row.active { background: linear-gradient(180deg, #eec96a 0%, #d9ad33 55%, #bd8f14 100%); color: #420a17; }
+      body.diwali .menu-note { color: #7a5a1e; }
+      body.diwali .wheel { background: radial-gradient(circle at 50% 42%, #f3d98b 0%, #dcb84f 58%, #c6982c 100%); }
+      body.diwali .wheel .wg { color: #5e4306; }
+      body.diwali .center-btn { background: radial-gradient(circle at 50% 40%, #f8e7ae 0%, #e9c766 60%, #cfa12f 100%); }
+      body.diwali .center-btn .cb-lbl { color: #5e4306; }
       .hidden { display: none !important; }
     </style>
   </head>
@@ -257,16 +249,6 @@
               </div>
             </div>
 
-            <div class="name-edit hidden" id="nameEdit">
-              <h2>Your Name</h2>
-              <p>Used only for your greeting, and kept only on this phone. Leave it blank to remove it.</p>
-              <input type="text" id="nameInput" maxlength="24" placeholder="Your name" autocomplete="off" />
-              <div class="ne-btns">
-                <button type="button" id="nameCancel">Cancel</button>
-                <button type="button" class="primary" id="nameSave">Save</button>
-              </div>
-            </div>
-
           </div>
         </div>
 
@@ -295,7 +277,7 @@
     <script>
     "use strict";
     /* ============================ channel ============================ */
-    var APP_VERSION = "v1.10";
+    var APP_VERSION = "v1.11";
       var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
     var UPLOADS_PLAYLIST = "UU1C7YIULB-Rj-9A1l62ajrA"; /* channel uploads = UU + channel id minus UC */
     var STREAMS_PLAYLIST = "UULV1C7YIULB-Rj-9A1l62ajrA"; /* "Live streams" — the channel's stream recordings */
@@ -1035,17 +1017,19 @@
       } catch (e) { /* not ready */ }
     }, 500);
 
-    /* ==================== personal: name + favorites (v1.9) ====================
-       Everything personal lives only in this phone's local storage —
-       it is never sent anywhere (the app-open counter still reports
-       just the app version). Favorites are individual videos saved
-       from the Events or Videos lists, or from Now Playing, by
-       holding SELECT; Settings holds the name used in the main
-       menu's greeting. */
-    var LS_NAME = "jcgs.name.v1", LS_FAVS = "jcgs.favorites.v1";
+    /* ==================== personal: favorites + theme ====================
+    Everything personal lives only in this phone's local storage —
+    it is never sent anywhere (the app-open counter still reports
+    just the app version). Favorites are individual videos saved
+    from the Events or Videos lists, or from Now Playing, by
+    holding SELECT; Settings holds the app theme (v1.11). */
+    var LS_FAVS = "jcgs.favorites.v1", LS_THEME = "jcgs.theme.v1";
     function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
     function lsSet(k, v) { try { if (v === null) window.localStorage.removeItem(k); else window.localStorage.setItem(k, v); } catch (e) {} }
-    var userName = (lsGet(LS_NAME) || "").trim();
+    var appTheme = lsGet(LS_THEME) === "diwali" ? "diwali" : "classic";
+    function applyTheme() { document.body.classList.toggle("diwali", appTheme === "diwali"); }
+    function setTheme(t) { appTheme = t; lsSet(LS_THEME, t); applyTheme(); render(); }
+    applyTheme();
     var favorites = [];
     try {
       var fj = JSON.parse(lsGet(LS_FAVS) || "[]");
@@ -1076,20 +1060,6 @@
       renderNowPlaying();
     }
     function openSettings() { push({ kind: "settings" }); }
-    function openNameEdit() {
-      push({ kind: "nameEdit" });
-      var inp = $("nameInput");
-      inp.value = userName;
-      setTimeout(function () { try { inp.focus(); inp.select(); } catch (e) {} }, 60);
-    }
-    function saveNameFromInput() {
-      userName = ($("nameInput").value || "").trim().slice(0, 24);
-      lsSet(LS_NAME, userName || null);
-      pop();
-    }
-    $("nameSave").addEventListener("click", function () { click(); saveNameFromInput(); });
-    $("nameCancel").addEventListener("click", function () { click(); pop(); });
-
     /* ============================ menu model ============================ */
     function buildItems() {
       if (screen().kind === "playlists") {
@@ -1156,9 +1126,10 @@ var items = [];
         });
       }
       if (screen().kind === "settings") {
-        return [
-          { label: "Your Name", right: userName || "Add", chevron: true, action: function () { openNameEdit(); } }
-        ];
+  return [
+    { label: "Classic Theme", right: appTheme === "classic" ? "✓" : "", action: function () { setTheme("classic"); } },
+    { label: "Diwali Theme", right: appTheme === "diwali" ? "✓" : "", action: function () { setTheme("diwali"); } }
+  ];
       }
       if (screen().kind !== "menu") return null;
       return [
@@ -1182,19 +1153,15 @@ var items = [];
       var s = screen();
       var isNP = s.kind === "nowPlaying";
       $("playerHost").classList.toggle("hidden", !isNP);
-      $("listScreen").classList.toggle("hidden", isNP || s.kind === "nameEdit");
-      $("nameEdit").classList.toggle("hidden", s.kind !== "nameEdit");
+      $("listScreen").classList.toggle("hidden", isNP);
       $("npOverlay").classList.toggle("hidden", !isNP);
       syncPlayingUi();
       if (isNP) { renderNowPlaying(); return; }
-      if (s.kind === "nameEdit") { currentItems = null; return; }
       $("lcdTitle").textContent = s.kind === "events" ? "JCGS Events" : (s.kind === "videosList" ? "Videos" : (s.kind === "playlists" ? "Playlists" : (s.kind === "favorites" ? "Favorites" : (s.kind === "settings" ? "Settings" : "JCGS YouTube App"))));
       $("menuNote").classList.toggle("hidden", s.kind !== "menu");
       if (s.kind === "menu") {
-        $("menuNote").textContent = userName
-          ? "Jai Jinendra, " + userName + "! Jain Center of Greater Sacramento \u2014 live darshan, aarti, pravachan & bhakti from the Sacramento derasar."
-          : "Jain Center of Greater Sacramento \u2014 live darshan, aarti, pravachan & bhakti from the Sacramento derasar.";
-      }
+  $("menuNote").textContent = "Jain Center of Greater Sacramento — live darshan, aarti, pravachan & bhakti from the Sacramento derasar.";
+}
       currentItems = buildItems();
       var rowsEl = $("rows");
       rowsEl.innerHTML = "";
@@ -1373,7 +1340,6 @@ var items = [];
     }
     function onCenter() {
       click();
-      if (screen().kind === "nameEdit") { saveNameFromInput(); return; }
       if (screen().kind === "nowPlaying") { togglePlay(); return; }
       var item = currentItems && currentItems[getSel()];
       if (item) item.action();
@@ -1404,12 +1370,6 @@ var items = [];
     function onPlayPause() { click(); togglePlay(); }
 
     document.addEventListener("keydown", function (e) {
-      if (screen().kind === "nameEdit") {
-        /* Let the name field keep its keys; Enter saves, Escape cancels. */
-        if (e.key === "Enter") { saveNameFromInput(); e.preventDefault(); }
-        else if (e.key === "Escape") { onMenuBtn(); e.preventDefault(); }
-        return;
-      }
       if (e.key === "ArrowDown") { onScrollStep(1); e.preventDefault(); }
       else if (e.key === "ArrowUp") { onScrollStep(-1); e.preventDefault(); }
       else if (e.key === "Enter" || e.key === " ") { onCenter(); e.preventDefault(); }
