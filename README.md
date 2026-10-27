@@ -6,6 +6,14 @@ GitHub Pages build: https://abhivrup.github.io/jcgs-live/
 
 ## Releases
 
+### v1.9 — Oct 26, 2026 — tag `v1.9`, commit f4a9e58
+
+**Change set since v1.8:**
+- Favorites: new menu item; hold SELECT on a video (Events list, Videos list, or Now Playing) to add/remove it; ★ markers in lists and on Now Playing; favorites play as a playlist with Next/Previous.
+- Settings: new menu item with a name field; the main menu greets "Jai Jinendra, <name>!" — name and favorites are stored only on the user's phone (local storage), never sent anywhere.
+- Main menu grows to 9 items and scrolls (7 visible at a time).
+- App commit f4a9e58; APP_VERSION and the open counter report v1.9.
+
 ### v1.8 — Oct 25, 2026 (current production) — tag `v1.8`, commit 9e9cd4d
 
 **Change set since v1.7:**
