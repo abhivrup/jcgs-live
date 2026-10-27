@@ -47,7 +47,7 @@
                         counts as "test". No UI, no logging, silent on any failure.
                                  The "v" value below must match APP_VERSION (defined in the
                                           body script, shown in the header) — bump both together. */
-      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.11&t='+Date.now();}catch(e){}})();
+      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.12&t='+Date.now();}catch(e){}})();
     </script>
     <title>JCGS YouTube App</title>
     <style>
@@ -216,6 +216,28 @@
       body.diwali .wheel .wg { color: #5e4306; }
       body.diwali .center-btn { background: radial-gradient(circle at 50% 40%, #f8e7ae 0%, #e9c766 60%, #cfa12f 100%); }
       body.diwali .center-btn .cb-lbl { color: #5e4306; }
+      body.diwali2 .wheel .wl { color: #5e4306; }
+      /* ------------------------------ Diwali 2 theme (v1.12) ------------------------------ */
+      body.diwali2 { background: radial-gradient(120% 90% at 50% 0%, #57101f 0%, #420a17 55%, #2a060f 100%); }
+      body.diwali2 .ipod { position: relative; background: linear-gradient(165deg, #8a2438 0%, #5e1020 45%, #420a17 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.55), 0 4px 14px rgba(0,0,0,0.4), inset 0 0 0 0.55cqw #c6982c, inset 0 2px 2px rgba(255,215,130,0.5), inset 0 -3px 8px rgba(0,0,0,0.35); }
+      body.diwali2 .ipod::before { content: "🪔 🪔 🪔 🪔 🪔"; position: absolute; top: 0.2cqw; left: 0; right: 0; text-align: center; font-size: 4.4cqw; line-height: 1; letter-spacing: 2.6cqw; pointer-events: none; z-index: 4; }
+      body.diwali2 .ipod::after { content: "🪔🪔🪔🪔🪔🪔🪔🪔🪔"; position: absolute; left: -0.2cqw; top: 9cqw; width: 4.4cqw; word-break: break-all; font-size: 4.4cqw; line-height: 2; pointer-events: none; z-index: 4; }
+      body.diwali2 .bezel { position: relative; background: #1c040c; box-shadow: inset 0 0 0 0.45cqw #c6982c, inset 0 1px 3px rgba(255,215,130,0.35); }
+      body.diwali2 .bezel::before { content: "🪔🪔🪔🪔🪔🪔🪔🪔🪔"; position: absolute; right: -0.2cqw; top: 5.8cqw; width: 4.4cqw; word-break: break-all; font-size: 4.4cqw; line-height: 2; pointer-events: none; z-index: 4; }
+      body.diwali2 .lcd { background: linear-gradient(180deg, #4a0d1e 0%, #380818 55%, #2a060f 100%); color: #f3d98b; box-shadow: inset 0 0 14px rgba(198,152,44,0.25); }
+      body.diwali2 .lcd-header { background: linear-gradient(180deg, #f3d98b 0%, #dcb84f 55%, #c6982c 100%); color: #420a17; border-bottom: 1px solid #8a2438; }
+      body.diwali2 .app-version { color: #420a17; }
+      body.diwali2 .row { color: #f3d98b; box-shadow: inset 0 -1px 0 rgba(198,152,44,0.18); }
+      body.diwali2 .row.active { background: linear-gradient(180deg, #f3d98b 0%, #dcb84f 55%, #c6982c 100%); color: #420a17; text-shadow: none; }
+      body.diwali2 .menu-note { color: #dcb84f; }
+      body.diwali2 .wheel-wrap { position: relative; }
+      body.diwali2 .wheel-wrap::before { content: ""; position: absolute; left: 50%; top: 50%; width: 60cqw; height: 60cqw; transform: translate(-50%, -50%); border-radius: 50%; background: repeating-conic-gradient(from -5deg, rgba(233,199,102,0.55) 0deg 5deg, rgba(233,199,102,0) 5deg 12deg); -webkit-mask: radial-gradient(circle, transparent 25.5cqw, #000 26.5cqw, #000 29.5cqw, transparent 30cqw); mask: radial-gradient(circle, transparent 25.5cqw, #000 26.5cqw, #000 29.5cqw, transparent 30cqw); pointer-events: none; }
+      body.diwali2 .wheel-wrap::after { content: ""; position: absolute; left: 50%; top: 50%; width: 55cqw; height: 55cqw; transform: translate(-50%, -50%); border-radius: 50%; border: 0.65cqw dotted #dcb84f; opacity: 0.85; pointer-events: none; }
+      body.diwali2 .wheel { background: radial-gradient(circle at 50% 42%, #f8e7ae 0%, #dcb84f 55%, #b8860b 100%); box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,246,200,0.9), inset 0 -3px 7px rgba(90,60,0,0.45), 0 0 0 0.6cqw #8a6a10; }
+      body.diwali2 .wheel .wl { color: #5e4306; }
+      body.diwali2 .wheel .wg { color: #5e4306; }
+      body.diwali2 .center-btn { background: radial-gradient(circle at 50% 40%, #fdf3c4 0%, #eec96a 60%, #c6982c 100%); box-shadow: 0 1px 3px rgba(0,0,0,0.35), inset 0 1px 1px rgba(255,250,220,0.95), inset 0 -2px 4px rgba(90,60,0,0.35); }
+      body.diwali2 .center-btn .cb-lbl { color: #5e4306; }      
       .hidden { display: none !important; }
     </style>
   </head>
@@ -277,7 +299,7 @@
     <script>
     "use strict";
     /* ============================ channel ============================ */
-    var APP_VERSION = "v1.11";
+    var APP_VERSION = "v1.12";
       var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
     var UPLOADS_PLAYLIST = "UU1C7YIULB-Rj-9A1l62ajrA"; /* channel uploads = UU + channel id minus UC */
     var STREAMS_PLAYLIST = "UULV1C7YIULB-Rj-9A1l62ajrA"; /* "Live streams" — the channel's stream recordings */
@@ -1026,8 +1048,8 @@
     var LS_FAVS = "jcgs.favorites.v1", LS_THEME = "jcgs.theme.v1";
     function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
     function lsSet(k, v) { try { if (v === null) window.localStorage.removeItem(k); else window.localStorage.setItem(k, v); } catch (e) {} }
-    var appTheme = lsGet(LS_THEME) === "diwali" ? "diwali" : "classic";
-    function applyTheme() { document.body.classList.toggle("diwali", appTheme === "diwali"); }
+    var appTheme = (lsGet(LS_THEME) === "diwali" || lsGet(LS_THEME) === "diwali2") ? lsGet(LS_THEME) : "classic";
+    function applyTheme() { document.body.classList.toggle("diwali", appTheme === "diwali"); document.body.classList.toggle("diwali2", appTheme === "diwali2"); }
     function setTheme(t) { appTheme = t; lsSet(LS_THEME, t); applyTheme(); render(); }
     applyTheme();
     var favorites = [];
@@ -1128,7 +1150,8 @@ var items = [];
       if (screen().kind === "settings") {
   return [
     { label: "Classic Theme", right: appTheme === "classic" ? "✓" : "", action: function () { setTheme("classic"); } },
-    { label: "Diwali Theme", right: appTheme === "diwali" ? "✓" : "", action: function () { setTheme("diwali"); } }
+    { label: "Diwali Theme", right: appTheme === "diwali" ? "✓" : "", action: function () { setTheme("diwali"); } },
+    { label: "Diwali 2 Theme", right: appTheme === "diwali2" ? "✓" : "", action: function () { setTheme("diwali2"); } }
   ];
       }
       if (screen().kind !== "menu") return null;
