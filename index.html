@@ -47,7 +47,7 @@
                         counts as "test". No UI, no logging, silent on any failure.
                                  The "v" value below must match APP_VERSION (defined in the
                                           body script, shown in the header) — bump both together. */
-      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.8&t='+Date.now();}catch(e){}})();
+      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.9&t='+Date.now();}catch(e){}})();
     </script>
     <title>JCGS YouTube App</title>
     <style>
@@ -204,6 +204,26 @@
         pointer-events: none; user-select: none;
         font-weight: 600; letter-spacing: 0.06em; color: #5a5e64; font-size: 3.3cqw;
       }
+      /* ------------------------------ name edit (v1.9) ------------------------------ */
+      .name-edit {
+        position: absolute; inset: 0; z-index: 5;
+        display: flex; flex-direction: column; padding: 6cqw 4.5cqw;
+        background: linear-gradient(180deg, #eef2e6 0%, #e3ead9 55%, #d9e2cd 100%);
+      }
+      .name-edit h2 { margin: 0 0 2cqw; font-size: 5.2cqw; }
+      .name-edit p { margin: 0 0 4cqw; font-size: 3.9cqw; line-height: 1.4; color: #4c5546; }
+      .name-edit input {
+        font: inherit; font-size: 5cqw; font-weight: 600; width: 100%;
+        padding: 2.6cqw 3cqw; border-radius: 1.6cqw; color: #191d17; background: #fff;
+        border: 1px solid rgba(70,90,55,0.45);
+      }
+      .name-edit .ne-btns { display: flex; gap: 2.5cqw; margin-top: 4.5cqw; }
+      .name-edit button {
+        flex: 1; font: inherit; font-size: 4.6cqw; font-weight: 700; cursor: pointer;
+        padding: 2.8cqw 0; border-radius: 999px; color: #191d17; background: #fff;
+        border: 1px solid rgba(70,90,55,0.4);
+      }
+      .name-edit button.primary { background: linear-gradient(180deg, #4b93e6 0%, #1d5cb8 100%); color: #fff; border-color: transparent; }
       .hidden { display: none !important; }
     </style>
   </head>
@@ -237,6 +257,16 @@
               </div>
             </div>
 
+            <div class="name-edit hidden" id="nameEdit">
+              <h2>Your Name</h2>
+              <p>Used only for your greeting, and kept only on this phone. Leave it blank to remove it.</p>
+              <input type="text" id="nameInput" maxlength="24" placeholder="Your name" autocomplete="off" />
+              <div class="ne-btns">
+                <button type="button" id="nameCancel">Cancel</button>
+                <button type="button" class="primary" id="nameSave">Save</button>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -265,7 +295,7 @@
     <script>
     "use strict";
     /* ============================ channel ============================ */
-    var APP_VERSION = "v1.8";
+    var APP_VERSION = "v1.9";
       var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
     var UPLOADS_PLAYLIST = "UU1C7YIULB-Rj-9A1l62ajrA"; /* channel uploads = UU + channel id minus UC */
     var STREAMS_PLAYLIST = "UULV1C7YIULB-Rj-9A1l62ajrA"; /* "Live streams" — the channel's stream recordings */
@@ -470,7 +500,7 @@
       loadIndex = startIndex || 0;
       isPlaying = true;
       progress = { t: 0, d: 0 };
-      videoTitle = m === "live" ? "Live Darshan" : (m === "streams" ? "JCGS Events" : (m === "shorts" ? "Reels" : (m === "playlist" ? (activePlaylistTitle || "Playlist") : "JCGS Videos")));
+      videoTitle = m === "live" ? "Live Darshan" : (m === "streams" ? "JCGS Events" : (m === "shorts" ? "Reels" : (m === "playlist" ? (activePlaylistTitle || "Playlist") : (m === "favorites" ? "Favorites" : "JCGS Videos"))));
       mountPlayer(m);
       gotoNowPlaying();
     }
@@ -485,6 +515,7 @@
         if (m === "streams") target.loadPlaylist({ listType: "playlist", list: STREAMS_PLAYLIST, index: loadIndex });
         else if (m === "shorts") target.loadPlaylist({ listType: "playlist", list: SHORTS_PLAYLIST, index: 0 });
         else if (m === "playlist") target.loadPlaylist({ listType: "playlist", list: activePlaylistId, index: 0 });
+        else if (m === "favorites") target.loadPlaylist(favorites.map(function (f) { return f.id; }), loadIndex);
         else target.loadPlaylist({ listType: "playlist", list: UPLOADS_PLAYLIST, index: loadIndex });
       }
     }
@@ -554,6 +585,7 @@
       if (m === "live") return "live#" + liveSeq;
       if (m === "streams") return "streams:" + loadIndex;
       if (m === "playlist") return "playlist:" + (activePlaylistId || "");
+      if (m === "favorites") return "favorites:" + favVersion + ":" + loadIndex;
       return m;
     }
     /* Stop and destroy the main player completely and empty its
@@ -640,7 +672,7 @@
       } catch (e) { /* not ready */ }
     }
     function stepTrack(dir) {
-      if (!player || (mode !== "videos" && mode !== "shorts" && mode !== "streams" && mode !== "playlist")) return;
+      if (!player || (mode !== "videos" && mode !== "shorts" && mode !== "streams" && mode !== "playlist" && mode !== "favorites")) return;
       try {
         var pl = player.getPlaylist ? player.getPlaylist() : null, len = pl ? pl.length : 0, idx = player.getPlaylistIndex ? player.getPlaylistIndex() : -1; if (len && idx >= 0) player.playVideoAt((idx + dir + len) % len); else if (dir > 0) player.nextVideo(); else player.previousVideo();
         progress = { t: 0, d: 0 };
@@ -1002,6 +1034,61 @@
       } catch (e) { /* not ready */ }
     }, 500);
 
+    /* ==================== personal: name + favorites (v1.9) ====================
+       Everything personal lives only in this phone's local storage —
+       it is never sent anywhere (the app-open counter still reports
+       just the app version). Favorites are individual videos saved
+       from the Events or Videos lists, or from Now Playing, by
+       holding SELECT; Settings holds the name used in the main
+       menu's greeting. */
+    var LS_NAME = "jcgs.name.v1", LS_FAVS = "jcgs.favorites.v1";
+    function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+    function lsSet(k, v) { try { if (v === null) window.localStorage.removeItem(k); else window.localStorage.setItem(k, v); } catch (e) {} }
+    var userName = (lsGet(LS_NAME) || "").trim();
+    var favorites = [];
+    try {
+      var fj = JSON.parse(lsGet(LS_FAVS) || "[]");
+      if (Array.isArray(fj)) favorites = fj.filter(function (f) { return f && f.id && f.title; });
+    } catch (e) { favorites = []; }
+    var favVersion = 0; /* folded into favorites' source key: any change rebuilds the player */
+    function saveFavorites() { lsSet(LS_FAVS, JSON.stringify(favorites)); favVersion++; }
+    function isFavorite(id) { return !!id && favorites.some(function (f) { return f.id === id; }); }
+    function toggleFavorite(id, title) {
+      if (!id) return;
+      var i = -1;
+      favorites.forEach(function (f, j) { if (f.id === id) i = j; });
+      if (i >= 0) favorites.splice(i, 1);
+      else favorites.unshift({ id: id, title: title || "Video" });
+      saveFavorites();
+    }
+    function currentVideoId() {
+      try {
+        var d = player && player.getVideoData ? player.getVideoData() : null;
+        return d && d.video_id ? d.video_id : null;
+      } catch (e) { return null; }
+    }
+    function openFavoritesList() { cancelLiveWork(); push({ kind: "favorites" }); }
+    function playFavoriteAt(i) {
+      if (!favorites[i]) return;
+      startMode("favorites", i);
+      videoTitle = favorites[i].title;
+      renderNowPlaying();
+    }
+    function openSettings() { push({ kind: "settings" }); }
+    function openNameEdit() {
+      push({ kind: "nameEdit" });
+      var inp = $("nameInput");
+      inp.value = userName;
+      setTimeout(function () { try { inp.focus(); inp.select(); } catch (e) {} }, 60);
+    }
+    function saveNameFromInput() {
+      userName = ($("nameInput").value || "").trim().slice(0, 24);
+      lsSet(LS_NAME, userName || null);
+      pop();
+    }
+    $("nameSave").addEventListener("click", function () { click(); saveNameFromInput(); });
+    $("nameCancel").addEventListener("click", function () { click(); pop(); });
+
     /* ============================ menu model ============================ */
     function buildItems() {
       if (screen().kind === "playlists") {
@@ -1025,6 +1112,8 @@
           if (!videoTitles[id]) return;
           vItems.push({
             label: videoTitles[id],
+            right: isFavorite(id) ? "★" : undefined,
+            favId: id, favTitle: videoTitles[id],
             action: function () { playVideoAt(i); }
           });
         });
@@ -1044,10 +1133,31 @@ var items = [];
     if (!streamTitles[id]) return;
           items.push({
             label: streamTitles[id],
+            right: isFavorite(id) ? "★" : undefined,
+            favId: id, favTitle: streamTitles[id],
             action: function () { playStreamAt(i); }
           });
         });
         return items;
+      }
+      if (screen().kind === "favorites") {
+        if (!favorites.length) return [
+          { label: "No favorites yet", action: function () {} },
+          { label: "Hold SELECT on a video to add it", action: function () {} }
+        ];
+        return favorites.map(function (f, i) {
+          return {
+            label: f.title,
+            right: "★",
+            favId: f.id, favTitle: f.title,
+            action: function () { playFavoriteAt(i); }
+          };
+        });
+      }
+      if (screen().kind === "settings") {
+        return [
+          { label: "Your Name", right: userName || "Add", chevron: true, action: function () { openNameEdit(); } }
+        ];
       }
       if (screen().kind !== "menu") return null;
       return [
@@ -1056,8 +1166,10 @@ var items = [];
         { label: "Reels", chevron: true, action: function () { startMode("shorts"); } },
         { label: "Playlists", chevron: true, action: function () { openPlaylistsList(); } },
         { label: "Videos", chevron: true, action: function () { openVideosList(); } },
+        { label: "Favorites", chevron: true, action: function () { openFavoritesList(); } },
         { label: "YouTube Channel", right: "Open", action: function () { openExternal(URL_HOME); } },
-        { label: "Now Playing", chevron: true, action: function () { push({ kind: "nowPlaying" }); } }
+        { label: "Now Playing", chevron: true, action: function () { push({ kind: "nowPlaying" }); } },
+        { label: "Settings", chevron: true, action: function () { openSettings(); } }
       ];
     }
 
@@ -1069,12 +1181,19 @@ var items = [];
       var s = screen();
       var isNP = s.kind === "nowPlaying";
       $("playerHost").classList.toggle("hidden", !isNP);
-      $("listScreen").classList.toggle("hidden", isNP);
+      $("listScreen").classList.toggle("hidden", isNP || s.kind === "nameEdit");
+      $("nameEdit").classList.toggle("hidden", s.kind !== "nameEdit");
       $("npOverlay").classList.toggle("hidden", !isNP);
       syncPlayingUi();
       if (isNP) { renderNowPlaying(); return; }
-      $("lcdTitle").textContent = s.kind === "events" ? "JCGS Events" : (s.kind === "videosList" ? "Videos" : (s.kind === "playlists" ? "Playlists" : "JCGS YouTube App"));
+      if (s.kind === "nameEdit") { currentItems = null; return; }
+      $("lcdTitle").textContent = s.kind === "events" ? "JCGS Events" : (s.kind === "videosList" ? "Videos" : (s.kind === "playlists" ? "Playlists" : (s.kind === "favorites" ? "Favorites" : (s.kind === "settings" ? "Settings" : "JCGS YouTube App"))));
       $("menuNote").classList.toggle("hidden", s.kind !== "menu");
+      if (s.kind === "menu") {
+        $("menuNote").textContent = userName
+          ? "Jai Jinendra, " + userName + "! Jain Center of Greater Sacramento \u2014 live darshan, aarti, pravachan & bhakti from the Sacramento derasar."
+          : "Jain Center of Greater Sacramento \u2014 live darshan, aarti, pravachan & bhakti from the Sacramento derasar.";
+      }
       currentItems = buildItems();
       var rowsEl = $("rows");
       rowsEl.innerHTML = "";
@@ -1126,7 +1245,7 @@ var items = [];
             if (idx >= 0 && list && list.length) pos = " · Video " + (idx + 1) + " of " + list.length;
           }
         } catch (e) { /* not ready */ }
-        sub.textContent = CHANNEL_NAME + pos + " · Vol " + volume + "%";
+        sub.textContent = CHANNEL_NAME + pos + " · Vol " + volume + "%" + (isFavorite(currentVideoId())? " · ★ Favorite": "");
       }
       $("npProgress").classList.toggle("hidden", !hasSource);
       if (hasSource) {
@@ -1200,9 +1319,38 @@ var items = [];
     $("zonePrev").addEventListener("click", zoneClick(onPrev));
     $("zoneNext").addEventListener("click", zoneClick(onNext));
     $("zonePlay").addEventListener("click", zoneClick(onPlayPause));
-    $("centerBtn").addEventListener("pointerdown", function (e) { e.stopPropagation(); });
-    $("centerBtn").addEventListener("pointerup", function (e) { e.stopPropagation(); });
-    $("centerBtn").addEventListener("click", function (e) { e.stopPropagation(); onCenter(); });
+    /* SELECT: a short press selects/plays as always. Holding it
+       (~0.6s) toggles the highlighted or playing video in Favorites
+       (v1.9), and the click that follows the hold is swallowed so
+       the video does not also pause or re-trigger. */
+    var centerHoldTimer = null, centerHeld = false;
+    $("centerBtn").addEventListener("pointerdown", function (e) {
+      e.stopPropagation();
+      centerHeld = false;
+      if (centerHoldTimer) clearTimeout(centerHoldTimer);
+      centerHoldTimer = setTimeout(function () { centerHeld = true; onCenterHold(); }, 600);
+    });
+    $("centerBtn").addEventListener("pointerup", function (e) {
+      e.stopPropagation();
+      if (centerHoldTimer) { clearTimeout(centerHoldTimer); centerHoldTimer = null; }
+    });
+    $("centerBtn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (centerHeld) { centerHeld = false; return; }
+      onCenter();
+    });
+    function onCenterHold() {
+      click();
+      if (screen().kind === "nowPlaying") {
+        if (mode && mode !== "live") {
+          var id = currentVideoId();
+          if (id) { toggleFavorite(id, videoTitle); renderNowPlaying(); }
+        }
+        return;
+      }
+      var item = currentItems && currentItems[getSel()];
+      if (item && item.favId) { toggleFavorite(item.favId, item.favTitle); render(); }
+    }
 
     function moveSelection(dir) {
       if (!currentItems || !currentItems.length) return;
@@ -1224,6 +1372,7 @@ var items = [];
     }
     function onCenter() {
       click();
+      if (screen().kind === "nameEdit") { saveNameFromInput(); return; }
       if (screen().kind === "nowPlaying") { togglePlay(); return; }
       var item = currentItems && currentItems[getSel()];
       if (item) item.action();
@@ -1254,6 +1403,12 @@ var items = [];
     function onPlayPause() { click(); togglePlay(); }
 
     document.addEventListener("keydown", function (e) {
+      if (screen().kind === "nameEdit") {
+        /* Let the name field keep its keys; Enter saves, Escape cancels. */
+        if (e.key === "Enter") { saveNameFromInput(); e.preventDefault(); }
+        else if (e.key === "Escape") { onMenuBtn(); e.preventDefault(); }
+        return;
+      }
       if (e.key === "ArrowDown") { onScrollStep(1); e.preventDefault(); }
       else if (e.key === "ArrowUp") { onScrollStep(-1); e.preventDefault(); }
       else if (e.key === "Enter" || e.key === " ") { onCenter(); e.preventDefault(); }
