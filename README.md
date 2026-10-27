@@ -6,6 +6,8 @@ GitHub Pages build: https://abhivrup.github.io/jcgs-live/
 
 ## Releases
 
+### v1.12 — October 27, 2026: Added a second festive theme in Settings: Diwali 2 Theme — deep maroon with gold, diyas framing the screen, a dark screen with gold text, and a rangoli ring around the gold wheel. The original Diwali Theme stays as the clean red-and-gold option.
+
 ### v1.11 — October 27, 2026: Removed the name option and greeting from Settings. Added a theme choice in Settings: Classic Theme or Diwali Theme (maroon body, cream-and-gold screen, gold wheel); the choice is saved on the phone.
 
 ### v1.10 — Oct 27, 2026: Favorites playback now loops continuously (when the last favorite ends, it starts again from the first). Favorites only; other sections unchanged.
