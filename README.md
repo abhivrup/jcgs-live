@@ -6,6 +6,8 @@ GitHub Pages build: https://abhivrup.github.io/jcgs-live/
 
 ## Releases
 
+### v1.14 — November 3, 2026: Fullscreen video on Android now turns landscape when you rotate the phone, including in the installed app. iPhone and computer behavior is unchanged.
+
 ### v1.13 — November 3, 2026: Live Darshan opens faster — the app remembers the current live video for 5 minutes, so opening it again doesn't wait for the lookup.
 
 ### v1.12 — October 27, 2026: Added a second festive theme in Settings: Diwali 2 Theme — deep maroon with gold, diyas framing the screen, a dark screen with gold text, and a rangoli ring around the gold wheel. The original Diwali Theme stays as the clean red-and-gold option.
