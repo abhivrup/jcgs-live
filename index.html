@@ -47,7 +47,7 @@
                         counts as "test". No UI, no logging, silent on any failure.
                                  The "v" value below must match APP_VERSION (defined in the
                                           body script, shown in the header) — bump both together. */
-      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.13&t='+Date.now();}catch(e){}})();
+      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.14&t='+Date.now();}catch(e){}})();
     </script>
     <title>JCGS YouTube App</title>
     <style>
@@ -299,7 +299,7 @@
     <script>
     "use strict";
     /* ============================ channel ============================ */
-    var APP_VERSION = "v1.13";
+    var APP_VERSION = "v1.14";
       var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
     var UPLOADS_PLAYLIST = "UU1C7YIULB-Rj-9A1l62ajrA"; /* channel uploads = UU + channel id minus UC */
     var STREAMS_PLAYLIST = "UULV1C7YIULB-Rj-9A1l62ajrA"; /* "Live streams" — the channel's stream recordings */
@@ -642,6 +642,30 @@
         f.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
       } catch (e) { /* garnish only */ }
     }
+    /* v1.14: tip fullscreen video into landscape whenever ANY
+       fullscreen engages (the YouTube player's own button is inside
+       the iframe, so the app gets no tap of its own to lock from)
+       and release the lock on exit. The lock needs fullscreen + a
+       user gesture, so it may be rejected when the gesture has
+       expired — a rejection is harmless and leaves today's behavior
+       unchanged. iPhone Safari has no lock API; the guards make
+       this a no-op there. Exiting fullscreen clears a lock
+       automatically; unlock() is called anyway. */
+    function syncFsOrientation() {
+      try {
+        if (!window.screen || !screen.orientation) return;
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (screen.orientation.lock) {
+            var lp = screen.orientation.lock("landscape");
+            if (lp && lp.catch) lp.catch(function () {});
+          }
+        } else if (screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      } catch (e) { /* optional garnish */ }
+    }
+    document.addEventListener("fullscreenchange", syncFsOrientation);
+    document.addEventListener("webkitfullscreenchange", syncFsOrientation);
     /* Build the YouTube player iframe ourselves instead of letting the
        IFrame API create it, so the embed request is guaranteed to carry a
        proper HTTP Referer. YouTube blocks playback with "Error 153: Video
