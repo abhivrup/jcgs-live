@@ -47,7 +47,7 @@
                         counts as "test". No UI, no logging, silent on any failure.
                                  The "v" value below must match APP_VERSION (defined in the
                                           body script, shown in the header) — bump both together. */
-      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.12&t='+Date.now();}catch(e){}})();
+      (function(){try{var s=/(^|\.)github\.io$/.test(location.hostname)?'app':'test';var i=new Image();i.src='https://script.google.com/macros/s/AKfycbxaacsEj3Akm3wA_ZLul07Mm3PSpvUTEWjIySQdvN9JiAtrq-l79sU8l6-y1SRItGDo/exec?s='+s+'&v=v1.13&t='+Date.now();}catch(e){}})();
     </script>
     <title>JCGS YouTube App</title>
     <style>
@@ -299,7 +299,7 @@
     <script>
     "use strict";
     /* ============================ channel ============================ */
-    var APP_VERSION = "v1.12";
+    var APP_VERSION = "v1.13";
       var CHANNEL_ID = "UC1C7YIULB-Rj-9A1l62ajrA";
     var UPLOADS_PLAYLIST = "UU1C7YIULB-Rj-9A1l62ajrA"; /* channel uploads = UU + channel id minus UC */
     var STREAMS_PLAYLIST = "UULV1C7YIULB-Rj-9A1l62ajrA"; /* "Live streams" — the channel's stream recordings */
@@ -417,6 +417,9 @@
        the player on the live embed and no previously loaded
        source can continue in its place — not even when re-entering
        Live. */
+    /* v1.13: cached live ID (see the cache helpers below
+       resolveLiveId). Live Darshan opens at once when the
+       resolved ID is still fresh on the device. */
     var liveSeq = 0;
     /* The channel owner's live resolver (Apps Script web app): given
        the JSONP callback name __jcgsLiveResolve, it answers with the
@@ -430,13 +433,24 @@
        never carried across entries. */
     var liveResolvedId = null;
     function startLive() {
-      /* Resolve the current live ID fresh, then enter live mode.
-         mountPlayer queues the entry if the IFrame API is not ready
-         yet. Any stray offscreen harvest player is cleared first. */
+      /* v1.13: a fresh cached ID opens the player at once; a
+         background refresh keeps the cache current without ever
+         swapping a playing player. Without a cache, behavior is
+         unchanged: resolve fresh, then enter live mode. */
       cancelLiveWork();
       liveSeq++;
       liveFallbackDone = false;
       liveResolvedId = null;
+      liveUsedCache = false;
+      liveCacheRetried = false;
+      var cached = getCachedLiveId();
+      if (cached) {
+        liveResolvedId = cached;
+        liveUsedCache = true;
+        startMode("live");
+        refreshLiveIdCache();
+        return;
+      }
       resolveLiveId(liveSeq);
     }
     /* Ask the resolver for the channel's current live video ID via a
@@ -459,6 +473,7 @@
         if (seq !== liveSeq) return;         /* entry superseded */
         if (screen().kind !== "menu") return; /* user navigated away */
         liveResolvedId = id || null;
+        if (id) setCachedLiveId(id);
         startMode("live");
       }
       window.__jcgsLiveResolve = function (data) {
@@ -469,6 +484,97 @@
       tag.onerror = function () { finish(null); };
       document.head.appendChild(tag);
       timer = setTimeout(function () { finish(null); }, 8000);
+    }
+    /* v1.13: device-side cache for the resolved live ID. The
+       resolver takes ~3s (Apps Script redirect + startup), and
+       startLive() used to wait for it before the player screen
+       appeared. A cached ID (5-minute TTL) lets the player open
+       at once; a background refresh keeps the cache fresh
+       without ever touching a playing player. Only positive IDs
+       are cached; null answers are never cached. localStorage
+       access is guarded so private mode can never break Live. */
+    var LIVE_ID_CACHE_KEY = "jcgs.liveId.v1";
+    var LIVE_ID_CACHE_TTL = 300000; /* 5 minutes */
+    var liveUsedCache = false;      /* this entry opened from cache */
+    var liveCacheRetried = false;   /* fresh re-resolve already tried */
+    function getCachedLiveId() {
+      try {
+        var raw = window.localStorage.getItem(LIVE_ID_CACHE_KEY);
+        if (!raw) return null;
+        var c = JSON.parse(raw);
+        if (!c || !c.id || !c.ts) return null;
+        if (Date.now() - c.ts > LIVE_ID_CACHE_TTL) return null;
+        return String(c.id);
+      } catch (e) { return null; }
+    }
+    function setCachedLiveId(id) {
+      try {
+        if (!id) return;
+        window.localStorage.setItem(LIVE_ID_CACHE_KEY, JSON.stringify({ id: String(id), ts: Date.now() }));
+      } catch (e) { /* cache is optional garnish */ }
+    }
+    /* Resolve in the background and cache the answer. Never touches
+       the player, the mode, or liveResolvedId. Uses its own JSONP
+       callback so it can never clobber an entry's in-flight resolve. */
+    function refreshLiveIdCache() {
+      var done = false;
+      var timer = null;
+      var tag = null;
+      function finishCache(data) {
+        if (done) return;
+        done = true;
+        if (timer) { clearTimeout(timer); timer = null; }
+        if (tag && tag.parentNode) tag.parentNode.removeChild(tag);
+        if (data && data.live) setCachedLiveId(String(data.live));
+      }
+      window.__jcgsLiveRefresh = function (data) { finishCache(data); };
+      tag = document.createElement("script");
+      tag.src = LIVE_RESOLVER_URL + "?cb=__jcgsLiveRefresh&t=" + Date.now();
+      tag.onerror = function () { finishCache(null); };
+      document.head.appendChild(tag);
+      timer = setTimeout(function () { finishCache(null); }, 8000);
+    }
+    /* One prefetch at app open, so the ID is often ready before the
+       first Live Darshan tap. Skipped when the cache is still fresh. */
+    function prefetchLiveId() {
+      if (getCachedLiveId()) return;
+      refreshLiveIdCache();
+    }
+    /* Rebuild the live player with a fresh ID after a cached ID
+       failed (e.g. the stream ended). Only used by the live error
+       path, at most once per entry. */
+    function rebuildLiveWithId(id) {
+      liveResolvedId = id;
+      liveUsedCache = false;
+      liveSeq++;
+      if (mode === "live" && screen().kind === "nowPlaying") mountPlayer("live");
+    }
+    function livePlayError() {
+      /* Cached ID failed on its first error: try one fresh resolve
+         before falling back to opening YouTube externally. */
+      if (liveUsedCache && !liveCacheRetried) {
+        liveCacheRetried = true;
+        var done = false;
+        var timer = null;
+        var tag = null;
+        function finishRetry(data) {
+          if (done) return;
+          done = true;
+          if (timer) { clearTimeout(timer); timer = null; }
+          if (tag && tag.parentNode) tag.parentNode.removeChild(tag);
+          var id = data && data.live ? String(data.live) : null;
+          if (id) { setCachedLiveId(id); rebuildLiveWithId(id); }
+          else liveEmbedFailed();
+        }
+        window.__jcgsLiveRetry = function (data) { finishRetry(data); };
+        tag = document.createElement("script");
+        tag.src = LIVE_RESOLVER_URL + "?cb=__jcgsLiveRetry&t=" + Date.now();
+        tag.onerror = function () { finishRetry(null); };
+        document.head.appendChild(tag);
+        timer = setTimeout(function () { finishRetry(null); }, 8000);
+        return;
+      }
+      liveEmbedFailed();
     }
     /* The embedded live player refused the stream (e.g. embedding
        disabled for it): leave Now Playing and open the live page on
@@ -661,7 +767,7 @@
           onError: function () {
             /* Only the live embed has a designed fallback; other modes
                keep the player's own error screen. */
-            if (mode === "live") liveEmbedFailed();
+            if (mode === "live") livePlayError();
           }
         }
       };
@@ -1401,6 +1507,7 @@ var items = [];
 
     $("appVersion").textContent = APP_VERSION;
       render();
+    try { prefetchLiveId(); } catch (e) {}
     </script>
   </body>
 </html>
