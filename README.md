@@ -6,6 +6,8 @@ GitHub Pages build: https://abhivrup.github.io/jcgs-live/
 
 ## Releases
 
+### v1.15 — November 5, 2026: If a video fails to load, the app now moves to the next video by itself instead of showing YouTube's error screen. After one full pass through a list with every video failing, it stops on the error screen. A short toast explains the skip.
+
 ### v1.14 — November 3, 2026: Fullscreen video on Android now turns landscape when you rotate the phone, including in the installed app. iPhone and computer behavior is unchanged.
 
 ### v1.13 — November 3, 2026: Live Darshan opens faster — the app remembers the current live video for 5 minutes, so opening it again doesn't wait for the lookup.
